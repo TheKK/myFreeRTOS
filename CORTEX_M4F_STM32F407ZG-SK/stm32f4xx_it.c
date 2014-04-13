@@ -143,14 +143,14 @@ void SysTick_Handler(void)
 {
 }
 
-void EXTI4_IRQHandler(void)
+void EXTI0_IRQHandler(void)
 {
-	STM_EVAL_LEDInit( LED3 )
+	if( EXTI_GetITStatus( EXTI_Line0 ) != RESET ){
 
-	for( uint8_t i = 0; i < 5; i++ ){
-		STM_EVAL_LEDToggle( LED3 );
-		vTaskDelay( 200 );
+		STM_EVAL_LEDToggl( LED4 );
 	}
+
+		EXTI_ClearITPendingBit( EXTI_Line0 );
 }
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */
@@ -174,4 +174,4 @@ void EXTI4_IRQHandler(void)
   */ 
 
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+/************************ (C) COPY(EXTI_Line15)IGHT STMicroelectronics *****END OF FILE****/

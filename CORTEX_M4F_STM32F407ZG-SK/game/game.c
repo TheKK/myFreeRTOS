@@ -189,11 +189,11 @@ GAME_Update()
 			//Player1 move
 			if( ballVY < 0 ){
 				if( player1X + player1W/2 < ballX + ballSize/2 ){
-					player1X += 8;
+					player1X += 7;
 					player2X += 2;
 				}
 				else{
-					player1X -= 8;
+					player1X -= 7;
 					player2X -= 2;
 				}
 			}
@@ -202,11 +202,11 @@ GAME_Update()
 			if( ballVY > 0 ){
 				if( player2X + player2W/2 < ballX + ballSize/2 ){
 					player1X += 2;
-					player2X += 8;
+					player2X += 7;
 				}
 				else{
 					player1X -= 2;
-					player2X -= 8;
+					player2X -= 7;
 				}
 
 			}

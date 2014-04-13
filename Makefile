@@ -57,7 +57,7 @@ CFLAGS += -D"assert_param(expr)=((void)0)"
 OBJS += \
       $(PWD)/CORTEX_M4F_STM32F407ZG-SK/main.o \
       $(PWD)/CORTEX_M4F_STM32F407ZG-SK/startup/system_stm32f4xx.o \
-      #$(PWD)/CORTEX_M4F_STM32F407ZG-SK/stm32f4xx_it.o \
+      $(PWD)/CORTEX_M4F_STM32F407ZG-SK/stm32f4xx_it.o \
 
 OBJS += \
       $(PWD)/croutine.o \

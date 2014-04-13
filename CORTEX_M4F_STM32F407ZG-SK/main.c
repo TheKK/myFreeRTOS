@@ -27,7 +27,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "game.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -45,69 +44,113 @@
 /* Private variables ---------------------------------------------------------*/
 extern uint8_t demoMode;
 
-void
-prvInit()
+void RCC_Configuration(void)
 {
-	//LCD init
-	LCD_Init();
-	IOE_Config();
-	LTDC_Cmd( ENABLE );
+      /* --------------------------- System Clocks Configuration -----------------*/
+      /* USART1 clock enable */
+      RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+      /* GPIOA clock enable */
+      RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+}
+ 
+/**************************************************************************************/
+ 
+void GPIO_Configuration(void)
+{
+    GPIO_InitTypeDef GPIO_InitStructure;
 
-	LCD_LayerInit();
-	LCD_SetLayer( LCD_FOREGROUND_LAYER );
-	LCD_Clear( LCD_COLOR_BLACK );
-	LCD_SetTextColor( LCD_COLOR_WHITE );
+    /*-------------------------- GPIO Configuration ----------------------------*/
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9 | GPIO_Pin_10;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-	//Button
-	STM_EVAL_PBInit( BUTTON_USER, BUTTON_MODE_GPIO );
+    /* Connect USART pins to AF */
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource9, GPIO_AF_USART1);   // USART1_TX
+    GPIO_PinAFConfig(GPIOA, GPIO_PinSource10, GPIO_AF_USART1);  // USART1_RX
+}
+ 
+/**************************************************************************************/
+ 
+void USART1_Configuration(void)
+{
+    USART_InitTypeDef USART_InitStructure;
 
-	//LED
-	STM_EVAL_LEDInit( LED3 );
+    /* USARTx configuration ------------------------------------------------------*/
+    /* USARTx configured as follow:
+     *  - BaudRate = 9600 baud
+     *  - Word Length = 8 Bits
+     *  - One Stop Bit
+     *  - No parity
+     *  - Hardware flow control disabled (RTS and CTS signals)
+     *  - Receive and transmit enabled
+     */
+    USART_InitStructure.USART_BaudRate = 9600;
+    USART_InitStructure.USART_WordLength = USART_WordLength_8b;
+    USART_InitStructure.USART_StopBits = USART_StopBits_1;
+    USART_InitStructure.USART_Parity = USART_Parity_No;
+    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+    USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+    USART_Init(USART1, &USART_InitStructure);
+    USART_Cmd(USART1, ENABLE);
 }
 
-static void GameEventTask1( void *pvParameters )
+void USART1_puts(char* s)
 {
-	while( 1 ){
-		GAME_EventHandler1();
-	}
+    while(*s) {
+        while(USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
+        USART_SendData(USART1, *s);
+        s++;
+    }
 }
 
-static void GameEventTask2( void *pvParameters )
+/**************************************************************************************/
+static void main1( void *pvParameters )
 {
-	while( 1 ){
-		GAME_EventHandler2();
-	}
+    RCC_Configuration();
+    GPIO_Configuration();
+    USART1_Configuration();
+
+    while( 1 ){
+	    USART1_puts("Hello World!\r\n");
+	    USART1_puts("Just for STM32F429I Discovery verify USART1 with USB TTL Cable\r\n");
+
+	    vTaskDelay( 500 );
+    }
 }
 
-static void GameEventTask3( void *pvParameters )
+int main (void)
 {
-	while( 1 ){
-		GAME_EventHandler3();
-	}
-}
-
-static void GameTask( void *pvParameters )
-{
-	while( 1 ){
-		GAME_Update();
-		GAME_Render();
-		vTaskDelay( 10 );
-	}
-}
-
-//Main Function
-int main(void)
-{
-	prvInit();
-
-	if( STM_EVAL_PBGetState( BUTTON_USER ) )
-		demoMode = 1;
-
-	xTaskCreate( GameTask, (signed char*) "GameTask", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
-	xTaskCreate( GameEventTask1, (signed char*) "GameEventTask1", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
-	xTaskCreate( GameEventTask2, (signed char*) "GameEventTask2", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
-	xTaskCreate( GameEventTask3, (signed char*) "GameEventTask3", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
-
-	//Call Scheduler
+	xTaskCreate( main1, (signed char*) "main1", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
 	vTaskStartScheduler();
 }
+
+#ifdef  USE_FULL_ASSERT
+
+/**
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
+void assert_failed(uint8_t* file, uint32_t line)
+{ 
+  /* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+
+  /* Infinite loop */
+  while (1)
+  {
+  }
+}
+#endif
+
+/**
+  * @}
+  */
+
+
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

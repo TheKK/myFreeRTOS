@@ -57,7 +57,7 @@ CFLAGS += -D"assert_param(expr)=((void)0)"
 OBJS += \
       $(PWD)/CORTEX_M4F_STM32F407ZG-SK/main.o \
       $(PWD)/CORTEX_M4F_STM32F407ZG-SK/startup/system_stm32f4xx.o \
-      $(PWD)/CORTEX_M4F_STM32F407ZG-SK/stm32f4xx_it.o \
+      #$(PWD)/CORTEX_M4F_STM32F407ZG-SK/stm32f4xx_it.o \
 
 OBJS += \
       $(PWD)/croutine.o \
@@ -79,17 +79,7 @@ OBJS += \
     $(PWD)/CORTEX_M4F_STM32F407ZG-SK/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_dma.o \
     $(PWD)/CORTEX_M4F_STM32F407ZG-SK/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_spi.o \
     $(PWD)/CORTEX_M4F_STM32F407ZG-SK/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_exti.o \
-    $(PWD)/CORTEX_M4F_STM32F407ZG-SK/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_dma2d.o \
-    $(PWD)/CORTEX_M4F_STM32F407ZG-SK/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_ltdc.o \
-    $(PWD)/CORTEX_M4F_STM32F407ZG-SK/Libraries/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_fmc.o \
     $(PWD)/Utilities/STM32F429I-Discovery/stm32f429i_discovery.o \
-    $(PWD)/Utilities/STM32F429I-Discovery/stm32f429i_discovery_sdram.o \
-    $(PWD)/Utilities/STM32F429I-Discovery/stm32f429i_discovery_lcd.o \
-    $(PWD)/Utilities/STM32F429I-Discovery/stm32f429i_discovery_ioe.o
-
-#Game
-OBJS += $(PWD)/CORTEX_M4F_STM32F407ZG-SK/game/game.o
-CFLAGS += -I $(PWD)/CORTEX_M4F_STM32F407ZG-SK/game
 
 CFLAGS += -DUSE_STDPERIPH_DRIVER
 CFLAGS += -I $(PWD)/CORTEX_M4F_STM32F407ZG-SK \

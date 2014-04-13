@@ -106,24 +106,76 @@ void USART1_puts(char* s)
     }
 }
 
+void itoa(uint32_t n, uint32_t base)                                                                                                                                                          {
+	volatile portCHAR buf[33] = {0};
+	volatile portCHAR *p = &buf[32];
+
+	if (n == 0)
+		*--p = '0';
+	else {
+		portCHAR *q;
+		volatile uint32_t num = n;
+
+		*--p = '\r';
+		*--p = '\n';
+
+		for (; num; num/=base)
+			*--p = "0123456789ABCDEF" [num % base];
+	}
+
+	USART1_puts( p );
+}
+
+
 /**************************************************************************************/
+volatile uint32_t* i = 0;
+
+
 static void main1( void *pvParameters )
 {
-    RCC_Configuration();
-    GPIO_Configuration();
-    USART1_Configuration();
+		while( 1 ){
+			(*i)++;
+		}
+}
 
-    while( 1 ){
-	    USART1_puts("Hello World!\r\n");
-	    USART1_puts("Just for STM32F429I Discovery verify USART1 with USB TTL Cable\r\n");
+static void main2( void *pvParameters )
+{
 
-	    vTaskDelay( 500 );
-    }
+	while( 1 ){
+		vTaskDelay( 1000 );
+
+		STM_EVAL_LEDToggle( LED4 );
+
+		itoa( *i, 10 );
+
+		*i = 0;
+
+		itoa( *i, 10 );
+	}
+}
+
+static void main3( void *pvParameters )
+{
+		vTaskDelay( 3000 );
+
+		STM_EVAL_LEDToggle( LED3 );
+		while( 1 ){
+
+		}
 }
 
 int main (void)
 {
+    RCC_Configuration();
+    GPIO_Configuration();
+    USART1_Configuration();
+    STM_EVAL_LEDInit( LED3 );
+    STM_EVAL_LEDInit( LED4 );
+    SysTick_Config( configCPU_CLOCK_HZ/1000 );
+
 	xTaskCreate( main1, (signed char*) "main1", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
+	xTaskCreate( main2, (signed char*) "main2", 128, NULL, tskIDLE_PRIORITY + 2, NULL );
+	xTaskCreate( main3, (signed char*) "main3", 128, NULL, tskIDLE_PRIORITY + 3, NULL );
 	vTaskStartScheduler();
 }
 

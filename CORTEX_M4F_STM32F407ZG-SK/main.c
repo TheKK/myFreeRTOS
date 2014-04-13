@@ -28,8 +28,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-#include "FreeRTOS.h"
-#include "task.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -130,11 +128,24 @@ void itoa(uint32_t n, uint32_t base)                                            
 /**************************************************************************************/
 volatile uint32_t* i = 0;
 
+void add (uint8_t mode)
+{
+	static uint32_t num = 0;
+
+		if(mode == 1)
+			num = num + 1;
+		else{
+			itoa( num, 10 );
+			num = 0;
+		}
+
+}
 
 static void main1( void *pvParameters )
 {
 		while( 1 ){
-			(*i)++;
+		add( 1 );
+		add( 0 );
 		}
 }
 
@@ -144,19 +155,17 @@ static void main2( void *pvParameters )
 	while( 1 ){
 		vTaskDelay( 1000 );
 
+
 		STM_EVAL_LEDToggle( LED4 );
+		add( 1 );
+		add( 0 );
 
-		itoa( *i, 10 );
-
-		*i = 0;
-
-		itoa( *i, 10 );
 	}
 }
 
 static void main3( void *pvParameters )
 {
-		vTaskDelay( 3000 );
+		vTaskDelay( 60000 );
 
 		STM_EVAL_LEDToggle( LED3 );
 		while( 1 ){
@@ -164,20 +173,29 @@ static void main3( void *pvParameters )
 		}
 }
 
-int main (void)
+static void main4( void *pvParameters )
 {
-    RCC_Configuration();
-    GPIO_Configuration();
-    USART1_Configuration();
-    STM_EVAL_LEDInit( LED3 );
-    STM_EVAL_LEDInit( LED4 );
-    SysTick_Config( configCPU_CLOCK_HZ/1000 );
-
-	xTaskCreate( main1, (signed char*) "main1", 128, NULL, tskIDLE_PRIORITY + 1, NULL );
-	xTaskCreate( main2, (signed char*) "main2", 128, NULL, tskIDLE_PRIORITY + 2, NULL );
-	xTaskCreate( main3, (signed char*) "main3", 128, NULL, tskIDLE_PRIORITY + 3, NULL );
-	vTaskStartScheduler();
+	while( 1 ){
+	}
 }
+
+
+/*int main (void)*/
+/*{*/
+    /*RCC_Configuration();*/
+    /*GPIO_Configuration();*/
+    /*USART1_Configuration();*/
+
+    /*STM_EVAL_PBInit( BUTTON_USER );*/
+    /*STM_EVAL_LEDInit( LED3 );*/
+    /*STM_EVAL_LEDInit( LED4 );*/
+    /*SysTick_Config( configCPU_CLOCK_HZ/1000 );*/
+
+	/*xTaskCreate( main1, (signed char*) "main1", 128, NULL, tskIDLE_PRIORITY + 1, NULL );*/
+	/*xTaskCreate( main2, (signed char*) "main2", 128, NULL, tskIDLE_PRIORITY + 2, NULL );*/
+	/*xTaskCreate( main3, (signed char*) "main3", 128, NULL, tskIDLE_PRIORITY + 3, NULL );*/
+	/*vTaskStartScheduler();*/
+/*}*/
 
 #ifdef  USE_FULL_ASSERT
 
@@ -190,19 +208,180 @@ int main (void)
   */
 void assert_failed(uint8_t* file, uint32_t line)
 { 
-  /* User can add his own implementation to report the file name and line number,
-     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+	/* User can add his own implementation to report the file name and line number,
+ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
 
-  /* Infinite loop */
-  while (1)
-  {
-  }
+	/* Infinite loop */
+	while (1)
+	{
+	}
 }
 #endif
 
 /**
-  * @}
-  */
+ * @}
+ */
 
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+
+EXTI_InitTypeDef   EXTI_InitStructure;
+/* Private define ------------------------------------------------------------*/
+/* Private macro -------------------------------------------------------------*/
+__IO uint32_t TimingDelay;
+/* Private variables ---------------------------------------------------------*/
+/* Private function prototypes -----------------------------------------------*/
+static void EXTILine0_Config(void);
+static void EXTILine13_Config(void);         
+
+int main(void)
+{
+	/*!< At this stage the microcontroller clock setting is already configured, 
+	 *   this is done through SystemInit() function which is called from startup
+	 *     files (startup_stm32f429_439xx.s) before to branch to application main. 
+	 *       To reconfigure the default setting of SystemInit() function, refer to
+	 *         system_stm32f4xx.c file
+	 *           */ 
+
+	RCC_ClocksTypeDef RCC_Clocks;
+	/* SysTick end of count event each 1ms */
+	RCC_GetClocksFreq(&RCC_Clocks);
+	SysTick_Config(RCC_Clocks.HCLK_Frequency / 1000);
+
+	/* Initialize LEDs mounted on EVAL board */
+	STM_EVAL_LEDInit(LED3);
+	STM_EVAL_LEDInit(LED4);
+
+	/* Put LED3 on */
+	STM_EVAL_LEDOn(LED3);
+
+	/* Configure EXTI Line0 (connected to PA0 pin) in interrupt mode */
+	EXTILine0_Config();
+
+	/* Configure EXTI Line13 (connected to PC13 pin) in interrupt mode */
+	EXTILine13_Config();
+
+	STM_EVAL_PBInit( BUTTON_USER, BUTTON_MODE_GPIO );
+
+	while (1)
+	{
+		/* Generate software interrupt: simulate a falling edge applied on EXTI0 line */
+		if( STM_EVAL_PBGetState( BUTTON_USER ) ){
+			EXTI_GenerateSWInterrupt(EXTI_Line13);
+			while( STM_EVAL_PBGetState( BUTTON_USER ) );
+		}
+
+		/*Delay(500);*/
+	}
+}
+static void EXTILine0_Config(void)
+{
+	EXTI_InitTypeDef   EXTI_InitStructure;
+	GPIO_InitTypeDef   GPIO_InitStructure;
+	NVIC_InitTypeDef   NVIC_InitStructure;
+
+	/* Enable GPIOA clock */
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+	/* Enable SYSCFG clock */
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+
+	/* Configure PA0 pin as input floating */
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+	/* Connect EXTI Line0 to PA0 pin */
+	SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOA, EXTI_PinSource0);
+
+	/* Configure EXTI Line0 */
+	EXTI_InitStructure.EXTI_Line = EXTI_Line0;
+	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;  
+	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_InitStructure);
+
+	/* Enable and set EXTI Line0 Interrupt to the lowest priority */
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+}
+static void EXTILine13_Config(void)
+{
+	EXTI_InitTypeDef   EXTI_InitStructure;
+	GPIO_InitTypeDef   GPIO_InitStructure;
+	NVIC_InitTypeDef   NVIC_InitStructure;
+
+	/* Enable GPIOC clock */
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+
+	/* Enable SYSCFG clock */
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+
+	/* Configure PC13 pin as input floating */
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);
+
+	/* Connect EXTI Line15 to PC13 pin */
+	SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOC, EXTI_PinSource13);
+
+	/* Configure EXTI Line13 */
+	EXTI_InitStructure.EXTI_Line = EXTI_Line4;
+	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
+	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_InitStructure);
+
+	/* Enable and set EXTI15_10 Interrupt to the lowest priority */
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI15_10_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+
+	NVIC_Init(&NVIC_InitStructure);
+}
+
+/**
+ *   * @brief  Inserts a delay time.
+ *     * @param  nTime: specifies the delay time length, in 10 ms.
+ *       * @retval None
+ *         */
+void Delay(__IO uint32_t nTime)
+{
+	TimingDelay = nTime;
+
+	while(TimingDelay != 0);
+}
+void TimingDelay_Decrement(void)
+{
+	if (TimingDelay != 0x00)
+	{ 
+		TimingDelay--;
+	}
+}
+
+#ifdef  USE_FULL_ASSERT
+
+/**
+ *   * @brief  Reports the name of the source file and the source line number
+ *     *         where the assert_param error has occurred.
+ *       * @param  file: pointer to the source file name
+ *         * @param  line: assert_param error line source number
+ *           * @retval None
+ *             */
+void assert_failed(uint8_t* file, uint32_t line)
+{
+	/* User can add his own implementation to report the file name and line number,
+	 *      ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
+
+	/* Infinite loop */
+	while (1)
+	{
+	}
+}
+#endif
+

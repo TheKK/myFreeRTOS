@@ -143,6 +143,15 @@ void SysTick_Handler(void)
 {
 }
 
+void EXTI4_IRQHandler(void)
+{
+	STM_EVAL_LEDInit( LED3 )
+
+	for( uint8_t i = 0; i < 5; i++ ){
+		STM_EVAL_LEDToggle( LED3 );
+		vTaskDelay( 200 );
+	}
+}
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */
 /*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */

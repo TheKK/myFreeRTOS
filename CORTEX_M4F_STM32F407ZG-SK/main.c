@@ -28,200 +28,82 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-#include "FreeRTOS.h"
-#include "task.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 /** @addtogroup Template
   * @{
   */ 
 
-/* Private typedef -----------------------------------------------------------*/
+EXTI_InitTypeDef   EXTI_InitStructure;
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+/* Private function prototypes -----------------------------------------------*/
 
-void RCC_Configuration(void)
-{
-      /* --------------------------- System Clocks Configuration -----------------*/
-      /* USART2 clock enable */
-      RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
-      /* GPIOA clock enable */
-      RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-}
- 
-/**************************************************************************************/
- 
-void GPIO_Configuration(void)
-{
-    GPIO_InitTypeDef GPIO_InitStructure;
-
-    /*-------------------------- GPIO Configuration ----------------------------*/
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9 | GPIO_Pin_10;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-    /* Connect USART pins to AF */
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource9, GPIO_AF_USART2);   // USART2_TX
-    GPIO_PinAFConfig(GPIOA, GPIO_PinSource10, GPIO_AF_USART2);  // USART2_RX
-}
- 
-/**************************************************************************************/
- 
-void USART2_Configuration(void)
-{
-    USART_InitTypeDef USART_InitStructure;
-
-    /* USARTx configuration ------------------------------------------------------*/
-    /* USARTx configured as follow:
-     *  - BaudRate = 9600 baud
-     *  - Word Length = 8 Bits
-     *  - One Stop Bit
-     *  - No parity
-     *  - Hardware flow control disabled (RTS and CTS signals)
-     *  - Receive and transmit enabled
-     */
-    USART_InitStructure.USART_BaudRate = 9600;
-    USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-    USART_InitStructure.USART_StopBits = USART_StopBits_1;
-    USART_InitStructure.USART_Parity = USART_Parity_No;
-    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
-    USART_InitStructure.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
-    USART_Init(USART2, &USART_InitStructure);
-    USART_Cmd(USART2, ENABLE);
-}
-
-void USART2_puts(char* s)
-{
-    while(*s) {
-        while(USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET);
-        USART_SendData(USART2, *s);
-        s++;
-    }
-}
-
-/**************************************************************************************/
-/*int main(void)*/
-/*{*/
-	/*RCC_Configuration();*/
-	/*GPIO_Configuration();*/
-	/*USART2_Configuration();*/
-
-	/*USART2_puts("Hello World!\r\n");*/
-	/*USART2_puts("Just for STM32F429I Discovery verify USART2 with USB TTL Cable\r\n");*/
-	/*while(1)*/
-	/*{*/
-		/*while(USART_GetFlagStatus(USART2, USART_FLAG_RXNE) == RESET);*/
-		/*char t = USART_ReceiveData(USART2);*/
-		/*if ((t == '\r')) {*/
-			/*while(USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET);*/
-			/*USART_SendData(USART2, t);*/
-			/*t = '\n';*/
-		/*}*/
-		/*while(USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET);*/
-		/*USART_SendData(USART2, t);*/
-	/*}*/
-
-	/*while(1); // Don't want to exit*/
-/*}*/
-
-void busyloop( uint32_t delay )
-{
-	while( delay )	delay--;
-}
-
-const TickType_t xDelay = 100 / portTICK_PERIOD_MS;
-
-static void UsartTask(void *pvParameters)
-{
-	STM_EVAL_LEDInit( LED4 );
-
-	for( ;; )
-	{
-		vTaskDelay( xDelay );
-		STM_EVAL_LEDToggle( LED4 );
-	}
-}
-
-static void LEDTask( void *pvParameters)
-{
-	STM_EVAL_LEDInit( LED3 );
-
-	for(;;){
-			STM_EVAL_LEDToggle(LED3);
-			vTaskDelay( xDelay );
-	}
-}
-
-static void ButtonTask( void *pvParameters )
-{
-	STM_EVAL_LEDInit( LED3 );
-	
-	while(1) {
-		if( STM_EVAL_PBGetState( BUTTON_USER ) ){
-			STM_EVAL_LEDOn( LED3 );
-			while( STM_EVAL_PBGetState( BUTTON_USER ) );
-			STM_EVAL_LEDOff( LED3 );
-		}
-	}
-}
-
-static void LCDTask( void *pvParameters )
-{
-	LCD_Init();
-	LCD_LayerInit();
-	IOE_Config();
-	LTDC_Cmd( ENABLE );
-	LCD_SetLayer(LCD_FOREGROUND_LAYER);
-	LCD_Clear(LCD_COLOR_RED);
-	LCD_DrawLine( 0x50, 0x50, 0x50, 0x0000 );
-	LCD_DisplayStringLine(LCD_LINE_6,(uint8_t*)"Hello World");
-
-	while(1){
-
-		if( IOE_TP_GetState()->TouchDetected ){
-			LCD_Clear(LCD_COLOR_BLUE);
-			LCD_DisplayStringLine(LCD_LINE_6,(uint8_t*)"Foooo");
-			while( IOE_TP_GetState()->TouchDetected );
-		}
-	}
-}
-
-static void LCDTaskX( void *pvParameters )
-{
-	LCD_Init();
-	LCD_LayerInit();
-	IOE_Config();
-	LTDC_Cmd( ENABLE );
-	LCD_SetLayer(LCD_FOREGROUND_LAYER);
-	LCD_Clear(LCD_COLOR_MAGENTA);
-	LCD_DrawLine( 0x50, 0x50, 0x50, 0x0000 );
-	LCD_DisplayStringLine(LCD_LINE_6,(uint8_t*)"Kyoka!");
-
-	while(1){
-	}
-}
-
-//Main Function
-int main(void)
+void Init()
 {
 	STM_EVAL_PBInit( BUTTON_USER, BUTTON_MODE_GPIO );
 
-	if( STM_EVAL_PBGetState(BUTTON_USER) ){
-		xTaskCreate(LCDTaskX, (signed char*)"LCDTaskX", 128, NULL, tskIDLE_PRIORITY+1, NULL);
-	}
-	else{
-		//Create Task For USART
-		xTaskCreate(UsartTask, (signed char*)"UsartTask", 128, NULL, tskIDLE_PRIORITY+1, NULL);
-		/*xTaskCreate(LEDTask, (signed char*)"LEDTask", 128, NULL, tskIDLE_PRIORITY+1, NULL);*/
-		xTaskCreate(ButtonTask, (signed char*)"ButtonTask", 128, NULL, tskIDLE_PRIORITY+1, NULL);
-		xTaskCreate(LCDTask, (signed char*)"LCDTask", 128, NULL, tskIDLE_PRIORITY+1, NULL);
-	}
+	/* Initialize LEDs mounted on EVAL board */
+	STM_EVAL_LEDInit(LED3);
+	STM_EVAL_LEDInit(LED4);
 
-	//Call Scheduler
+	/* Configure EXTI Line0 (connected to PA0 pin) in interrupt mode */
+	EXTILine0_Config();
+	/*USARTConfig();*/
+}
+
+void EXTILine0_Config(void)
+{
+	EXTI_InitTypeDef   EXTI_InitStructure;
+	GPIO_InitTypeDef   GPIO_InitStructure;
+	NVIC_InitTypeDef   NVIC_InitStructure;
+
+	/* Enable GPIOA clock */
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+	/* Enable SYSCFG clock */
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+
+	/* Configure PA0 pin as input floating */
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+	/* Connect EXTI Line0 to PA0 pin */
+	SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOA, EXTI_PinSource0);
+
+	/* Configure EXTI Line0 */
+	EXTI_InitStructure.EXTI_Line = EXTI_Line0;
+	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
+	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_InitStructure);
+
+	/* Enable and set EXTI Line0 Interrupt to the lowest priority */
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+}
+
+static void Task1( void* pvParameters )
+{
+	while( 1 ){
+		STM_EVAL_LEDToggle( LED3 );
+		vTaskDelay( 500 );
+	}
+}
+
+int
+main( void )
+{
+	Init();
+
+	xTaskCreate( Task1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+
 	vTaskStartScheduler();
 }

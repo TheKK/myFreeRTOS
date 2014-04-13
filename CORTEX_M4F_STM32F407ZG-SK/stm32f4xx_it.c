@@ -143,6 +143,15 @@ void SysTick_Handler(void)
 {
 }
 
+void EXTI0_IRQHandler(void)
+{
+	if( EXTI_GetITStatus( EXTI_Line0 ) != RESET ){
+
+		STM_EVAL_LEDToggl( LED4 );
+	}
+
+		EXTI_ClearITPendingBit( EXTI_Line0 );
+}
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */
 /*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */
@@ -165,4 +174,4 @@ void SysTick_Handler(void)
   */ 
 
 
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+/************************ (C) COPY(EXTI_Line15)IGHT STMicroelectronics *****END OF FILE****/

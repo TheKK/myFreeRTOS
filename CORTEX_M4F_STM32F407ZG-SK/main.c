@@ -32,6 +32,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "queue.h"
 /** @addtogroup Template
   * @{
   */ 
@@ -42,6 +43,38 @@ EXTI_InitTypeDef   EXTI_InitStructure;
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
+
+xQueueHandle MsgQueue;
+uint32_t iii = 1;
+
+void USART1_puts(char* s)
+{
+	while(*s) {
+		while(USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
+		USART_SendData(USART1, *s);
+		s++;
+	}
+}
+
+void itoa(uint32_t n, uint32_t base) {
+	volatile portCHAR buf[33] = {0};
+	volatile portCHAR *p = &buf[32];
+
+	if (n == 0)
+		*--p = '0';
+	else {
+		portCHAR *q;
+		volatile uint32_t num = n;
+
+		*--p = '\r';
+		*--p = '\n';
+
+		for (; num; num/=base)
+			*--p = "0123456789ABCDEF" [num % base];
+	}
+
+	USART1_puts( p );
+}
 
 void Init()
 {
@@ -137,25 +170,59 @@ void USART(void)
 
 }
 
+
+
+
+
+
 void Task1( void* pvParameters )
 {
-	uint32_t iii = 0;
-
 	while( 1 ){
+		iii++;
 		while( STM_EVAL_PBGetState( BUTTON_USER ) ){
 			iii++;
-			itoa( iii, 10 );
 		}
-		itoa( 321, 10 );
 	}
 }
+
+
+void QTask1( void* pvParameters )
+{
+	uint32_t snd = 100;
+
+	while( 1 ){
+		xQueueSend( MsgQueue, ( uint32_t* )&snd, 0 );  
+		vTaskDelay(1000);
+	}
+}
+
+void QTask2( void* pvParameters )
+{
+	uint32_t rcv = 0;
+	while( 1 ){
+		if( xQueueReceive( MsgQueue, &rcv, 100/portTICK_RATE_MS ) == pdPASS  &&  rcv == 100)
+		{  
+			STM_EVAL_LEDToggle( LED3 );
+		}
+	}
+}
+
 
 int
 main( void )
 {
 	Init();
+	EXTILine0_Config();
+	USART();
+
+	MsgQueue = xQueueCreate( 5 , sizeof( uint32_t ) ); 
 
 	xTaskCreate( Task1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+	xTaskCreate( Task2, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+//	xTaskCreate( QTask1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+//	xTaskCreate( QTask2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+1, NULL );
 
 	vTaskStartScheduler();
 }
+
+

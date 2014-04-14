@@ -145,6 +145,7 @@
 /*}*/
  /*extern uint32_t iii;*/
 
+/*
 void USART1_puts(char* s)
 {
 	while(*s) {
@@ -173,18 +174,26 @@ void itoa(uint32_t n, uint32_t base) {
 
 	USART1_puts( p );
 }
+*/
+
+extern uint32_t iii;
 
 void EXTI0_IRQHandler(void)
 {
-	if( EXTI_GetITStatus( EXTI_Line0 ) != RESET ){
 
-		while( 1 ){
+	if( EXTI_GetITStatus( EXTI_Line0 ) != RESET ){
+		while(1){
 			STM_EVAL_LEDToggle( LED4 );
-			vTaskDelay( 500 );
-			itoa( 123, 10 );
+
+			int j,k;
+			for(j=0;j<10000;j++){
+				for(k=0;k<1000;k++){}
+			}
+
+			itoa( iii, 10 );
 		}
 	}
-		EXTI_ClearITPendingBit( EXTI_Line0 );
+	EXTI_ClearITPendingBit( EXTI_Line0 );
 }
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */

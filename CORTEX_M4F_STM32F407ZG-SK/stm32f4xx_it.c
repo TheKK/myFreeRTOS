@@ -51,105 +51,139 @@
   * @param  None
   * @retval None
   */
-void NMI_Handler(void)
-{
-}
+/*void NMI_Handler(void)*/
+/*{*/
+/*}*/
 
 /**
   * @brief  This function handles Hard Fault exception.
   * @param  None
   * @retval None
   */
-void HardFault_Handler(void)
-{
-  /* Go to infinite loop when Hard Fault exception occurs */
-  while (1)
-  {
-  }
-}
+/*void HardFault_Handler(void)*/
+/*{*/
+  /*[> Go to infinite loop when Hard Fault exception occurs <]*/
+  /*while (1)*/
+  /*{*/
+  /*}*/
+/*}*/
 
 /**
   * @brief  This function handles Memory Manage exception.
   * @param  None
   * @retval None
   */
-void MemManage_Handler(void)
-{
-  /* Go to infinite loop when Memory Manage exception occurs */
-  while (1)
-  {
-  }
-}
+/*void MemManage_Handler(void)*/
+/*{*/
+  /*[> Go to infinite loop when Memory Manage exception occurs <]*/
+  /*while (1)*/
+  /*{*/
+  /*}*/
+/*}*/
 
 /**
   * @brief  This function handles Bus Fault exception.
   * @param  None
   * @retval None
   */
-void BusFault_Handler(void)
-{
-  /* Go to infinite loop when Bus Fault exception occurs */
-  while (1)
-  {
-  }
-}
+/*void BusFault_Handler(void)*/
+/*{*/
+  /*[> Go to infinite loop when Bus Fault exception occurs <]*/
+  /*while (1)*/
+  /*{*/
+  /*}*/
+/*}*/
 
 /**
   * @brief  This function handles Usage Fault exception.
   * @param  None
   * @retval None
   */
-void UsageFault_Handler(void)
-{
-  /* Go to infinite loop when Usage Fault exception occurs */
-  while (1)
-  {
-  }
-}
+/*void UsageFault_Handler(void)*/
+/*{*/
+  /*[> Go to infinite loop when Usage Fault exception occurs <]*/
+  /*while (1)*/
+  /*{*/
+  /*}*/
+/*}*/
 
 /**
   * @brief  This function handles SVCall exception.
   * @param  None
   * @retval None
   */
-void SVC_Handler(void)
-{
-}
+/*void SVC_Handler(void)*/
+/*{*/
+/*}*/
 
 /**
   * @brief  This function handles Debug Monitor exception.
   * @param  None
   * @retval None
   */
-void DebugMon_Handler(void)
-{
-}
+/*void DebugMon_Handler(void)*/
+/*{*/
+/*}*/
 
 /**
   * @brief  This function handles PendSVC exception.
   * @param  None
   * @retval None
   */
-void PendSV_Handler(void)
-{
-}
+/*void PendSV_Handler(void)*/
+/*{*/
+/*}*/
 
 /**
   * @brief  This function handles SysTick Handler.
   * @param  None
   * @retval None
   */
-void SysTick_Handler(void)
+/*void SysTick_Handler(void)*/
+/*{*/
+	/*STM_EVAL_LEDOn( LED4 );*/
+/*}*/
+ /*extern uint32_t iii;*/
+
+void USART1_puts(char* s)
 {
+	while(*s) {
+		while(USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET);
+		USART_SendData(USART1, *s);
+		s++;
+	}
+}
+
+void itoa(uint32_t n, uint32_t base) {
+	volatile portCHAR buf[33] = {0};
+	volatile portCHAR *p = &buf[32];
+
+	if (n == 0)
+		*--p = '0';
+	else {
+		portCHAR *q;
+		volatile uint32_t num = n;
+
+		*--p = '\r';
+		*--p = '\n';
+
+		for (; num; num/=base)
+			*--p = "0123456789ABCDEF" [num % base];
+	}
+
+	USART1_puts( p );
 }
 
 void EXTI0_IRQHandler(void)
 {
 	if( EXTI_GetITStatus( EXTI_Line0 ) != RESET ){
 
-		STM_EVAL_LEDToggl( LED4 );
+		while( 1 ){
+			STM_EVAL_LEDToggle( LED4 );
+			vTaskDelay( 500 );
+			itoa( 123, 10 );
+		}
 	}
-
 		EXTI_ClearITPendingBit( EXTI_Line0 );
 }
 /******************************************************************************/

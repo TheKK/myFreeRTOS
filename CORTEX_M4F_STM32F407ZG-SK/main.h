@@ -33,6 +33,7 @@
 #include "stm32f429i_discovery.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include "queue.h"
 
 
 /* Exported types ------------------------------------------------------------*/

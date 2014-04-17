@@ -176,7 +176,7 @@ void itoa(uint32_t n, uint32_t base) {
 }
 */
 
-extern uint32_t iii;
+extern uint32_t i;
 
 void EXTI0_IRQHandler(void)
 {
@@ -189,7 +189,7 @@ void EXTI0_IRQHandler(void)
 			for(k=0;k<1000;k++){}
 		}
 
-//		itoa( iii, 10 );
+//		itoa( i, 10 );
 	}
 	EXTI_ClearITPendingBit( EXTI_Line0 );
 }

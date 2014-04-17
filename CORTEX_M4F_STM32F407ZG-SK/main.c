@@ -45,7 +45,7 @@ EXTI_InitTypeDef   EXTI_InitStructure;
 /* Private function prototypes -----------------------------------------------*/
 
 xQueueHandle MsgQueue;
-uint32_t iii = 0;
+uint32_t i = 0;
 
 void USART1_puts(char* s)
 {
@@ -78,53 +78,19 @@ void itoa(uint32_t n, uint32_t base) {
 
 void Init()
 {
-	/*STM_EVAL_PBInit( BUTTON_USER, BUTTON_MODE_GPIO );*/
-	RCC_ClocksTypeDef RCC_Clocks;
-	/* SysTick end of count event each 1ms */
-	RCC_GetClocksFreq(&RCC_Clocks);
-	SysTick_Config(RCC_Clocks.HCLK_Frequency / 1000); 
-
 	/* Initialize LEDs mounted on EVAL board */
 	STM_EVAL_LEDInit(LED3);
 	STM_EVAL_LEDInit(LED4);
 
-	/* Configure EXTI Line0 (connected to PA0 pin) in interrupt mode */
-	EXTILine0_Config();
-}
+	/*STM_EVAL_PBInit( BUTTON_USER, BUTTON_MODE_GPIO );*/
 
-void EXTILine0_Config(void)
-{
-	EXTI_InitTypeDef   EXTI_InitStructure;
-	GPIO_InitTypeDef   GPIO_InitStructure;
-	NVIC_InitTypeDef   NVIC_InitStructure;
+//	RCC_ClocksTypeDef RCC_Clocks;
+	/* SysTick end of count event each 1ms */
+//	RCC_GetClocksFreq(&RCC_Clocks);
+//	if( SysTick_Config(RCC_Clocks.HCLK_Frequency / 1000000) ){
+//		STM_EVAL_LEDOn(LED4);
+//	} 
 
-	/* Enable GPIOA clock */
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-	/* Enable SYSCFG clock */
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
-
-	/* Configure PA0 pin as input floating */
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
-	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-	/* Connect EXTI Line0 to PA0 pin */
-	SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOA, EXTI_PinSource0);
-
-	/* Configure EXTI Line0 */
-	EXTI_InitStructure.EXTI_Line = EXTI_Line0;
-	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
-	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-	EXTI_Init(&EXTI_InitStructure);
-
-	/* Enable and set EXTI Line0 Interrupt to the lowest priority */
-	NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0xFF;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0xFF;
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_Init(&NVIC_InitStructure);
 }
 
 void USART(void)
@@ -171,82 +137,63 @@ void USART(void)
 }
 
 
+portTickType oneS = 1000000;
 
-
-
-
-void Task1( void* pvParameters )
-{
-	while( 1 ){
-		iii++;
-		while( STM_EVAL_PBGetState( BUTTON_USER ) ){
-			iii++;
-			STM_EVAL_LEDOn(LED4);
-		}
-	}
-}
-
-
-void Task2( void* pvParameters )
-{
-	while( 1 ){
-		vTaskDelay( 1000 );
-		itoa(iii, 10);
-		iii = 0;
-	}
-}
-
-void Task3( void* pvParameters )
-{
-	vTaskDelay( 300000 );
-	while(1){
-		itoa(iii, 10);
-		iii = 100;
-		itoa(iii, 10);
-		while(1){}
-	}
-}
-
-
-
-
+uint32_t snd = 1;
+uint32_t rcv = 0;
+uint32_t line = 1111111111;
 
 void QTask1( void* pvParameters )
 {
-	uint32_t snd = 100;
 
 	while( 1 ){
-		xQueueSend( MsgQueue, ( uint32_t* )&snd, 0 );  
-		vTaskDelay(1000);
+		if( xQueueSend( MsgQueue, ( uint32_t* )&snd, 0 ) == pdPASS ){
+//		xQueueSend( MsgQueue, ( uint32_t* )&snd, 0 );
+		snd++;
+		}
+
 	}
 }
 
 void QTask2( void* pvParameters )
 {
-	uint32_t rcv = 0;
+	uint32_t base = 1;
 	while( 1 ){
-		if( xQueueReceive( MsgQueue, &rcv, 100/portTICK_RATE_MS ) == pdPASS  &&  rcv == 100)
-		{  
-			STM_EVAL_LEDToggle( LED3 );
+		if( xQueueReceive( MsgQueue, &rcv, 100/portTICK_RATE_MS ) == pdPASS  &&  rcv == base)
+		{
+//			STM_EVAL_LEDToggle( LED3 );
+			itoa(rcv, 10);
+			base++;
+		}
+	}
+}
+
+void Task3( void* pvParameters )
+{
+	vTaskDelay( oneS );
+	while(1){
+		itoa(line, 10);
+		itoa(snd, 10);
+		itoa(line, 10);
+		itoa(rcv, 10);
+		while(1){
+			STM_EVAL_LEDToggle(LED3);
+			vTaskDelay( oneS );
 		}
 	}
 }
 
 
-int
-main( void )
+int main( void )
 {
 	Init();
-	EXTILine0_Config();
 	USART();
 
-	MsgQueue = xQueueCreate( 5 , sizeof( uint32_t ) ); 
+	MsgQueue = xQueueCreate( 5000 , sizeof( uint32_t ) ); 
 
-//	xTaskCreate( Task1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
-//	xTaskCreate( Task2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+2, NULL );
-//	xTaskCreate( Task3, (signed char*)"Task3", 128, NULL, tskIDLE_PRIORITY+3, NULL );
-	xTaskCreate( QTask1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
-	xTaskCreate( QTask2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+//	xTaskCreate( QTask1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+//	xTaskCreate( QTask2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+	xTaskCreate( Task3, (signed char*)"Task3", 128, NULL, tskIDLE_PRIORITY+3, NULL );
 
 	vTaskStartScheduler();
 }

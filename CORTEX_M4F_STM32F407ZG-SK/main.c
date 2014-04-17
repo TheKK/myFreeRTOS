@@ -242,11 +242,11 @@ main( void )
 
 	MsgQueue = xQueueCreate( 5 , sizeof( uint32_t ) ); 
 
-	xTaskCreate( Task1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+//	xTaskCreate( Task1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
 //	xTaskCreate( Task2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+2, NULL );
 //	xTaskCreate( Task3, (signed char*)"Task3", 128, NULL, tskIDLE_PRIORITY+3, NULL );
-//	xTaskCreate( QTask1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
-//	xTaskCreate( QTask2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+	xTaskCreate( QTask1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+	xTaskCreate( QTask2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+1, NULL );
 
 	vTaskStartScheduler();
 }

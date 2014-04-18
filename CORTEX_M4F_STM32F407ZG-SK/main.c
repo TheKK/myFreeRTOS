@@ -137,32 +137,26 @@ void USART(void)
 }
 
 
-portTickType oneS = 1000000;
+portTickType oneS = 100000;
 
-uint32_t snd = 1;
-uint32_t rcv = 0;
-uint32_t line = 1111111111;
+uint32_t snd = 0;
+
+uint32_t rcv = 999;
+uint32_t base = 0;
 
 void QTask1( void* pvParameters )
 {
-
 	while( 1 ){
 		if( xQueueSend( MsgQueue, ( uint32_t* )&snd, 0 ) == pdPASS ){
-//		xQueueSend( MsgQueue, ( uint32_t* )&snd, 0 );
-		snd++;
 		}
-
+		snd++;
 	}
 }
 
 void QTask2( void* pvParameters )
 {
-	uint32_t base = 1;
 	while( 1 ){
-		if( xQueueReceive( MsgQueue, &rcv, 100/portTICK_RATE_MS ) == pdPASS  &&  rcv == base)
-		{
-//			STM_EVAL_LEDToggle( LED3 );
-			itoa(rcv, 10);
+		if( xQueueReceive( MsgQueue, &rcv, 100 ) == pdPASS  &&  rcv == base){
 			base++;
 		}
 	}
@@ -170,12 +164,16 @@ void QTask2( void* pvParameters )
 
 void Task3( void* pvParameters )
 {
-	vTaskDelay( oneS );
+	vTaskDelay( 2 );
 	while(1){
-		itoa(line, 10);
+		USART1_puts("-----------------\r\n");
+		USART1_puts("snd: ");
 		itoa(snd, 10);
-		itoa(line, 10);
+		USART1_puts("rcv: ");
 		itoa(rcv, 10);
+		USART1_puts("base: ");
+		itoa(base, 10);
+
 		while(1){
 			STM_EVAL_LEDToggle(LED3);
 			vTaskDelay( oneS );
@@ -189,10 +187,10 @@ int main( void )
 	Init();
 	USART();
 
-	MsgQueue = xQueueCreate( 5000 , sizeof( uint32_t ) ); 
+	MsgQueue = xQueueCreate( 10000 , sizeof( uint32_t ) ); 
 
-//	xTaskCreate( QTask1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
-//	xTaskCreate( QTask2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+	xTaskCreate( QTask1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+	xTaskCreate( QTask2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+1, NULL );
 	xTaskCreate( Task3, (signed char*)"Task3", 128, NULL, tskIDLE_PRIORITY+3, NULL );
 
 	vTaskStartScheduler();

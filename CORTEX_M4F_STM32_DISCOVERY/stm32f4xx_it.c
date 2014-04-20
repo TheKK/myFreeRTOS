@@ -112,9 +112,9 @@ void UsageFault_Handler(void)
   * @param  None
   * @retval None
   */
-void SVC_Handler(void)
-{
-}
+/*void SVC_Handler(void)*/
+/*{*/
+/*}*/
 
 /**
   * @brief  This function handles Debug Monitor exception.
@@ -130,9 +130,9 @@ void DebugMon_Handler(void)
   * @param  None
   * @retval None
   */
-void PendSV_Handler(void)
-{
-}
+/*void PendSV_Handler(void)*/
+/*{*/
+/*}*/
 
 /**
   * @brief  This function handles SysTick Handler.
@@ -154,7 +154,7 @@ void EXTI0_IRQHandler(void)
 		itoa( 313, 10 );
 		itoa( iii, 10 );
 		iii = 0;
-		STM_EVAL_LEDOn( LED3 );
+		STM_EVAL_LEDToggle( LED3 );
 	}
 	EXTI_ClearITPendingBit( EXTI_Line0 );
 }

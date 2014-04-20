@@ -176,9 +176,11 @@ void USART(void)
 
 void Task1( void* pvParameters )
 {
+	char* txt = 'T';
 	while( 1 ){
 		while( STM_EVAL_PBGetState( BUTTON_USER ) ){
-			iii++;
+			USART1_puts( txt );
+			vTaskDelay( 500 );
 		}
 	}
 }
@@ -237,7 +239,7 @@ main( void )
 	EXTILine0_Config();
 	USART();
 
-	MsgQueue = xQueueCreate( 5 , sizeof( uint32_t ) ); 
+	/*MsgQueue = xQueueCreate( 5 , sizeof( uint32_t ) ); */
 
 	xTaskCreate( Task1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
 //	xTaskCreate( Task2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+2, NULL );
@@ -247,5 +249,3 @@ main( void )
 
 	vTaskStartScheduler();
 }
-
-

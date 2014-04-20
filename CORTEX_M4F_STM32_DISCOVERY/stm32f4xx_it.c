@@ -144,17 +144,19 @@ void DebugMon_Handler(void)
 	/*STM_EVAL_LEDOn( LED4 );*/
 /*}*/
 
-extern uint32_t iii;
-extern xQueueHandle MsgQueue;
+extern uint32_t i;
 
 void EXTI0_IRQHandler(void)
 {
 	if( EXTI_GetITStatus( EXTI_Line0 ) != RESET ){
-		
-		itoa( 313, 10 );
-		itoa( iii, 10 );
-		iii = 0;
-		STM_EVAL_LEDToggle( LED3 );
+		STM_EVAL_LEDToggle( LED4 );
+
+		int j,k;
+		for(j=0;j<10000;j++){
+			for(k=0;k<1000;k++){}
+		}
+
+//		itoa( i, 10 );
 	}
 	EXTI_ClearITPendingBit( EXTI_Line0 );
 }

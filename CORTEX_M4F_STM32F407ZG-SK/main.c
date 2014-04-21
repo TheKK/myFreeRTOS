@@ -201,40 +201,12 @@ void Task3( void* pvParameters )
 	vTaskDelay( 300000 );
 	while(1){
 		itoa(iii, 10);
-		iii = 100;
-		itoa(iii, 10);
 		while(1){}
 	}
 }
 
 
-
-
-
-void QTask1( void* pvParameters )
-{
-	uint32_t snd = 100;
-
-	while( 1 ){
-		xQueueSend( MsgQueue, ( uint32_t* )&snd, 0 );  
-		vTaskDelay(1000);
-	}
-}
-
-void QTask2( void* pvParameters )
-{
-	uint32_t rcv = 0;
-	while( 1 ){
-		if( xQueueReceive( MsgQueue, &rcv, 100/portTICK_RATE_MS ) == pdPASS  &&  rcv == 100)
-		{  
-			STM_EVAL_LEDToggle( LED3 );
-		}
-	}
-}
-
-
-int
-main( void )
+int main( void )
 {
 	Init();
 	EXTILine0_Config();
@@ -243,8 +215,8 @@ main( void )
 	MsgQueue = xQueueCreate( 5 , sizeof( uint32_t ) ); 
 
 	xTaskCreate( Task1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
-//	xTaskCreate( Task2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+2, NULL );
-//	xTaskCreate( Task3, (signed char*)"Task3", 128, NULL, tskIDLE_PRIORITY+3, NULL );
+	xTaskCreate( Task2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+2, NULL );
+	xTaskCreate( Task3, (signed char*)"Task3", 128, NULL, tskIDLE_PRIORITY+3, NULL );
 //	xTaskCreate( QTask1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
 //	xTaskCreate( QTask2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+1, NULL );
 

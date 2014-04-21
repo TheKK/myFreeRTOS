@@ -92,21 +92,27 @@ CFLAGS += -I $(PWD)/CORTEX_M4F_STM32_DISCOVERY \
 all: $(BIN_IMAGE)
 
 $(BIN_IMAGE): $(EXECUTABLE)
-	$(OBJCOPY) -O binary $^ $@
-	$(OBJCOPY) -O ihex $^ $(HEX_IMAGE)
-	$(OBJDUMP) -h -S -D $(EXECUTABLE) > $(PROJECT).lst
-	$(SIZE) $(EXECUTABLE)
+	@echo "    OBJCOPY   "$(notdir $@)
+	@$(OBJCOPY) -O binary $^ $@
+	@$(OBJCOPY) -O ihex $^ $(HEX_IMAGE)
+	@echo "    OBJDUMP   "$(notdir $@)
+	@$(OBJDUMP) -h -S -D $(EXECUTABLE) > $(PROJECT).lst
+	@echo "    SIZE      "$(notdir $@)
+	@$(SIZE) $(EXECUTABLE)
 	
 $(EXECUTABLE): $(OBJS)
-	$(LD) -o $@ $(OBJS) \
+	@echo "    LD      "$(notdir $@)
+	@$(LD) -o $@ $(OBJS) \
 		--start-group $(LIBS) --end-group \
 		$(LDFLAGS)
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo "    CC      "$(notdir $@)
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 %.o: %.S
-	$(CC) $(CFLAGS) -c $< -o $@
+	@echo "    CC      "$(notdir $@)
+	@$(CC) $(CFLAGS) -c $< -o $@
 
 flash:
 	st-flash write $(BIN_IMAGE) 0x8000000

@@ -22,3 +22,6 @@
 *.elf
 *.lst
 *.hex
+
+# vim swap file
+*.swp

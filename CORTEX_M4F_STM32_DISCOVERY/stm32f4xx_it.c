@@ -148,17 +148,11 @@ extern uint32_t i;
 
 void EXTI0_IRQHandler(void)
 {
-	if( EXTI_GetITStatus( EXTI_Line0 ) != RESET ){
-		STM_EVAL_LEDToggle( LED4 );
-
-		int j,k;
-		for(j=0;j<10000;j++){
-			for(k=0;k<1000;k++){}
-		}
-
-//		itoa( i, 10 );
+	if (EXTI_GetITStatus(EXTI_Line0) != RESET){
+		STM_EVAL_LEDOff(LED3);
 	}
-	EXTI_ClearITPendingBit( EXTI_Line0 );
+
+	EXTI_ClearITPendingBit(EXTI_Line0);
 }
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */

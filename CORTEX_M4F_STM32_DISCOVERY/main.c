@@ -36,9 +36,65 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-/* Private function prototypes -----------------------------------------------*/
+/* Private function prototypes ------ -----------------------------------------*/
+
+void EXTILine0_Config(void)
+{
+	EXTI_InitTypeDef EXTI_InitStructure;
+	GPIO_InitTypeDef GPIO_InitStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
+
+	/* Enable GPIOA clock */
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
+	/* Enable SYSCFG clock */
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+
+	/* Configure PA0 pin as input floating */
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
+	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
+
+	/* Connect EXTI Line0 to PA0 pin */
+	SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOG, EXTI_PinSource13);
+
+	/* Configure EXTI Line0 */
+	EXTI_InitStructure.EXTI_Line = EXTI_Line0;
+	EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
+	EXTI_InitStructure.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_InitStructure);
+
+	/* Enable and set EXTI Line0 Interrupt to the lowest priority */
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x0F;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0x0F;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+}
+
+void Init(void)
+{
+	STM_EVAL_PBInit(BUTTON_USER, BUTTON_MODE_GPIO);
+	STM_EVAL_LEDInit(LED3);
+	STM_EVAL_LEDInit(LED4);
+
+	EXTILine0_Config();
+}
+
+static void SignalTask(void* pvParameters)
+{
+	while (1){
+		STM_EVAL_LEDOn(LED3);
+	}
+}
 
 /* Main Function -------------------------------------------------------------*/
 int main( void )
 {
+	Init();
+
+	xTaskCreate(SignalTask, (signed char*)"SignalTask", 128, NULL, tskIDLE_PRIORITY + 1, NULL);
+
+	vTaskStartScheduler();
 }

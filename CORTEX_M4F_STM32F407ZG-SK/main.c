@@ -147,7 +147,7 @@ uint32_t base = 0;
 void QTask1( void* pvParameters )
 {
 	while( 1 ){
-		if( xQueueSend( MsgQueue, ( uint32_t* )&snd, 0 ) == pdPASS ){
+		if( xQueueSend( MsgQueue, &snd, 0 ) == pdPASS ){
 		}
 		snd++;
 	}
@@ -162,17 +162,36 @@ void QTask2( void* pvParameters )
 	}
 }
 
+
+
+void Task1( void* pvParameters )
+{
+	int k = 18;
+	while( 1 ){
+//		__asm volatile (
+//			"	add %[result], #5, #1 						\n"
+//			"	: [result] "r" (snd) ::					\n"
+//		);
+		asm("mov %0, %1" : "=r" (snd) : "r" (k): );
+
+		if( xQueueSend( MsgQueue, &snd, 0 ) == pdPASS ){
+		}
+	}
+}
+
+
+
 void Task3( void* pvParameters )
 {
-	vTaskDelay( 2 );
+	vTaskDelay( 1000 );
 	while(1){
 		USART1_puts("-----------------\r\n");
 		USART1_puts("snd: ");
 		itoa(snd, 10);
-		USART1_puts("rcv: ");
-		itoa(rcv, 10);
-		USART1_puts("base: ");
-		itoa(base, 10);
+//		USART1_puts("rcv: ");
+//		itoa(rcv, 10);
+//		USART1_puts("base: ");
+//		itoa(base, 10);
 
 		while(1){
 			STM_EVAL_LEDToggle(LED3);
@@ -189,8 +208,11 @@ int main( void )
 
 	MsgQueue = xQueueCreate( 10000 , sizeof( uint32_t ) ); 
 
-	xTaskCreate( QTask1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
-	xTaskCreate( QTask2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+//	xTaskCreate( QTask1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+//	xTaskCreate( QTask2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+
+	xTaskCreate( Task1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
+
 	xTaskCreate( Task3, (signed char*)"Task3", 128, NULL, tskIDLE_PRIORITY+3, NULL );
 
 	vTaskStartScheduler();

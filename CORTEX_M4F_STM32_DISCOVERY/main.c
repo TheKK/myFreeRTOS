@@ -1,5 +1,6 @@
 #include "main.h"
 #include "semphr.h"
+#include "queue.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -89,29 +90,51 @@ void Init(){
 /*-------------------------- Task ----------------------------*/
 
 SemaphoreHandle_t xMutex = NULL;
-long i = 30;
+SemaphoreHandle_t empty = NULL;
+SemaphoreHandle_t full = NULL;
+xQueueHandle buffer = NULL;
 
-void Task1( void* pvParameters ){
-	if( xSemaphoreTake( xMutex, portMAX_DELAY ) == pdTRUE ){
-		while( 1 ){
-			i++;
-			itoa(i, 10);
+void Producer1(void* pvParameters){
+	long sendItem = 1;
+	while(1){
+		// initial is 10, so producer can push 10 item
+		if( xSemaphoreTake(empty, portMAX_DELAY) == pdTRUE ){
 
-			vTaskDelay(100000);
+			if( xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE ){
+			/******************** critical section ********************/
+				xQueueSend( buffer, &sendItem, 0 );
+				USART1_puts("add item, buffer = ");
+				itoa( (long)uxQueueSpacesAvailable(buffer), 10);
+				sendItem++;
+			/******************** critical section ********************/
+				xSemaphoreGive(xMutex);
+			}
+			// give "full" semaphore
+			xSemaphoreGive(full);
 		}
+		vTaskDelay(90000);
 	}
 }
 
-void Task2( void* pvParameters ){
-	while( 1 ){
-		if( xSemaphoreTake( xMutex, portMAX_DELAY ) == pdTRUE ){
+void Consumer1(void* pvParameters){
+	long getItem = -1;
+	while(1){
+		// initial is 0 so consumer can't get any item
+		if( xSemaphoreTake(full, portMAX_DELAY) == pdTRUE ){
 
-			i--;
-			itoa(i, 10);
-
-			xSemaphoreGive( xMutex );
+			if( xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE ){
+			/******************** critical section ********************/
+				xQueueReceive( buffer, &getItem, 0 );
+				USART1_puts("get: ");
+				itoa(getItem, 10);
+				USART1_puts("remove item, buffer = ");
+				itoa( (long)uxQueueSpacesAvailable(buffer), 10);
+			/******************** critical section ********************/
+				xSemaphoreGive(xMutex);
+			}
+			// give "empty" semaphore
+			xSemaphoreGive(empty);
 		}
-
 		vTaskDelay(100000);
 	}
 }
@@ -119,9 +142,12 @@ void Task2( void* pvParameters ){
 int main( void ){
 	Init();
 	xMutex = xSemaphoreCreateMutex();
+	empty = xSemaphoreCreateCounting(10, 10);
+	full = xSemaphoreCreateCounting(10, 0);		/* Total is 10, and strat with 0 */
+	buffer = xQueueCreate( 10 , sizeof( long ) );
 
-	xTaskCreate( Task1, (signed char*)"Task1", 128, NULL, tskIDLE_PRIORITY+1, NULL );
-	xTaskCreate( Task2, (signed char*)"Task2", 128, NULL, tskIDLE_PRIORITY+2, NULL );
+	xTaskCreate(Producer1, (signed char*)"Producer1", 128, NULL, tskIDLE_PRIORITY+1, NULL);
+	xTaskCreate(Consumer1, (signed char*)"Consumer1", 128, NULL, tskIDLE_PRIORITY+1, NULL);
 
 	vTaskStartScheduler();
 }

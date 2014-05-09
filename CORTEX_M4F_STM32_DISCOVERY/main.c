@@ -28,17 +28,55 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
+#include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 /** @addtogroup Template
   * @{
-  */ 
+  */
 
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 
-/* Main Function -------------------------------------------------------------*/
+void Init()
+{
+	/*Must enable the clock of pin group G*/
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOG, ENABLE);
+	/*Not sure what this clock do*/
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+
+	GPIO_InitTypeDef GPIO_Structure;
+	GPIO_Structure.GPIO_Pin = GPIO_Pin_9;		/*Pin number*/
+	GPIO_Structure.GPIO_Mode = GPIO_Mode_OUT;	/*Input or output*/
+	GPIO_Structure.GPIO_OType = GPIO_OType_PP;	/*Operating ouput type*/
+	GPIO_Structure.GPIO_PuPd = GPIO_PuPd_UP;	/*Pull-up or Pull-down*/
+	GPIO_Structure.GPIO_Speed = GPIO_Speed_2MHz;	/*Speed, not sure what this for*/
+	GPIO_Init(GPIOG, &GPIO_Structure);
+
+	/*Reset bits means to down the voltage*/
+	GPIO_ResetBits(GPIOG, GPIO_Pin_9);
+}
+
+void bitTask(void* pvParameters)
+{
+	while (1) {
+		vTaskDelay(10000);
+		GPIO_ResetBits(GPIOG, GPIO_Pin_9);
+		vTaskDelay(10000);
+		GPIO_SetBits(GPIOG, GPIO_Pin_9);
+	}
+}
+
 int main( void )
 {
+	Init();
+
+	xTaskCreate(bitTask, (signed char*)"bit", 128, NULL, tskIDLE_PRIORITY + 1, NULL);
+
+	vTaskStartScheduler();
 }
+
+
